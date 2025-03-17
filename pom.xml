@@ -30,6 +30,12 @@
 
 	<dependencies>
 
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.12.1</version>
+		</dependency>
+
 		<!-- https://mvnrepository.com/artifact/com.cloudera.api.swagger/cloudera-manager-api-swagger -->
 		<dependency>
 			<groupId>com.cloudera.api.swagger</groupId>
