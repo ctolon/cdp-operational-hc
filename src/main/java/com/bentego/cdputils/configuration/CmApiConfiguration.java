@@ -11,6 +11,8 @@ import com.cloudera.api.swagger.AuthServiceRoleConfigGroupsResourceApi;
 import com.cloudera.api.swagger.AuthServiceRolesResourceApi;
 import com.cloudera.api.swagger.BatchResourceApi;
 import com.cloudera.api.swagger.CdpResourceApi;
+import com.cloudera.api.swagger.ClouderaManagerResourceApi;
+import com.cloudera.api.swagger.ClustersResourceApi;
 import com.cloudera.api.swagger.CertManagerResourceApi;
 import com.cloudera.api.swagger.CmPeersResourceApi;
 import com.cloudera.api.swagger.CommandsResourceApi;
@@ -111,6 +113,16 @@ public class CmApiConfiguration {
     @Bean
     public CdpResourceApi cdpResourceApi(ApiClient apiClient) {
         return new CdpResourceApi(apiClient);
+    }
+
+    @Bean
+    public ClouderaManagerResourceApi clouderaManagerResourceApi(ApiClient apiClient) {
+        return new ClouderaManagerResourceApi(apiClient);
+    }
+
+    @Bean
+    public ClustersResourceApi clustersResourceApi(ApiClient apiClient) {
+        return new ClustersResourceApi(apiClient);
     }
 
     @Bean
