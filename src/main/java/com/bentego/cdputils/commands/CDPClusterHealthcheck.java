@@ -6,6 +6,7 @@ import com.bentego.cdputils.service.CommonHealthcheckService;
 import com.cloudera.api.swagger.*;
 import com.cloudera.api.swagger.client.ApiException;
 import com.cloudera.api.swagger.model.*;
+import com.google.gson.GsonBuilder;
 import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import com.google.gson.Gson;
@@ -50,7 +51,9 @@ public class CDPClusterHealthcheck {
     @ShellMethod(key = "healthcheck", value = "Say hello")
     public void cdpOperationalHealthcheck () throws ApiException, IOException {
 
-        Gson gson = new Gson();
+        Gson gson = new GsonBuilder()
+                .setPrettyPrinting()
+                .create();
 
         // CDP General Configurations
         ApiConfigList allHostsConfig = allHostsResourceApi.readConfig(CmApiView.FULL);
