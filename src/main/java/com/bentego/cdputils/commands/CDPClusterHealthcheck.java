@@ -4,6 +4,7 @@ import com.bentego.cdputils.configuration.HealthcheckReportConfig;
 import com.bentego.cdputils.contants.api.CmApiView;
 import com.bentego.cdputils.contants.roleconfig.HdfsRoleConfigGroupName;
 import com.bentego.cdputils.dtos.DirCapacityDto;
+import com.bentego.cdputils.dtos.HdfsCapacityDto;
 import com.bentego.cdputils.dtos.ServiceTypesDto;
 import com.bentego.cdputils.dtos.SslCertificateDetailsDto;
 import com.bentego.cdputils.enums.DataUnit;
@@ -39,7 +40,7 @@ public class CDPClusterHealthcheck {
     private final SSLCertificateService sslCertificateService;
     private final ShellCommandExecutorService shellCommandExecutorService;
     private final InspectPerformanceService inspectPerformanceService;
-    private final CommonHealthcheckService commonHealthcheckService;
+    private final TimeSeriesService timeSeriesService;
 
     private final ServicesResourceApi servicesResourceApi;
     private final RoleConfigGroupsResourceApi roleConfigGroupsResourceApi;
@@ -59,7 +60,7 @@ public class CDPClusterHealthcheck {
             SSLCertificateService sslCertificateService,
             ShellCommandExecutorService shellCommandExecutorService,
             InspectPerformanceService inspectPerformanceService,
-            CommonHealthcheckService commonHealthcheckService,
+            TimeSeriesService timeSeriesService,
             ServicesResourceApi servicesResourceApi,
             RoleConfigGroupsResourceApi roleConfigGroupsResourceApi,
             AllHostsResourceApi allHostsResourceApi,
@@ -77,7 +78,7 @@ public class CDPClusterHealthcheck {
         this.sslCertificateService = sslCertificateService;
         this.shellCommandExecutorService = shellCommandExecutorService;
         this.inspectPerformanceService = inspectPerformanceService;
-        this.commonHealthcheckService = commonHealthcheckService;
+        this.timeSeriesService = timeSeriesService;
         this.servicesResourceApi = servicesResourceApi;
         this.roleConfigGroupsResourceApi = roleConfigGroupsResourceApi;
         this.allHostsResourceApi = allHostsResourceApi;
@@ -177,6 +178,10 @@ public class CDPClusterHealthcheck {
                     hdfsJournalnodeDir = apiConfig.getValue();
                 }
             }
+
+            // HDFS General Charts
+            HdfsCapacityDto hdfsCapacityDto = timeSeriesService.getGeneralHdfsCapacity();
+
         }
 
         // Get Capacity of Directories for HDFS

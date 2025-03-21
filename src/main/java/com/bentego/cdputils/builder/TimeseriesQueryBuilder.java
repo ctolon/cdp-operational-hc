@@ -14,4 +14,8 @@ public final class TimeseriesQueryBuilder {
         return query.toString();
 
     }
+
+    public static String buildHdfsCapacityCheckQuery() {
+        return "SELECT dfs_capacity, dfs_capacity_used, dfs_capacity_used_non_hdfs WHERE entityName = 'hdfs'";
+    }
 }
