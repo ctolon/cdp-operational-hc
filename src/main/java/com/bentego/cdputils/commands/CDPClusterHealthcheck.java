@@ -174,7 +174,7 @@ public class CDPClusterHealthcheck {
 
         // Get Capacity of Directories for HDFS
         List<DirCapacityDto> dirCapacityDtos = new ArrayList<>();
-        ApiHostList apiHostList = hostsResourceApi.readHosts("", "", CmApiView.FULL);
+        ApiHostList apiHostList = hostsResourceApi.readHosts(null, null, CmApiView.FULL);
         for (ApiHost apiHost: apiHostList.getItems()) {
             for (ApiRoleRef apiRoleRef: apiHost.getRoleRefs()) {
 
