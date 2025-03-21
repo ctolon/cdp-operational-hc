@@ -38,8 +38,9 @@ public class CDPClusterHealthcheck {
     private final FileManagerService fileManagerService;
     private final SSLCertificateService sslCertificateService;
     private final ShellCommandExecutorService shellCommandExecutorService;
-
     private final CommonHealthcheckService commonHealthcheckService;
+
+    private final CommandsResourceApi commandsResourceApi;
     private final ServicesResourceApi servicesResourceApi;
     private final RoleConfigGroupsResourceApi roleConfigGroupsResourceApi;
     private final AllHostsResourceApi allHostsResourceApi;
@@ -58,6 +59,7 @@ public class CDPClusterHealthcheck {
             SSLCertificateService sslCertificateService,
             ShellCommandExecutorService shellCommandExecutorService,
             CommonHealthcheckService commonHealthcheckService,
+            CommandsResourceApi commandsResourceApi,
             ServicesResourceApi servicesResourceApi,
             RoleConfigGroupsResourceApi roleConfigGroupsResourceApi,
             AllHostsResourceApi allHostsResourceApi,
@@ -75,6 +77,7 @@ public class CDPClusterHealthcheck {
         this.sslCertificateService = sslCertificateService;
         this.shellCommandExecutorService = shellCommandExecutorService;
         this.commonHealthcheckService = commonHealthcheckService;
+        this.commandsResourceApi = commandsResourceApi;
         this.servicesResourceApi = servicesResourceApi;
         this.roleConfigGroupsResourceApi = roleConfigGroupsResourceApi;
         this.allHostsResourceApi = allHostsResourceApi;
@@ -327,10 +330,31 @@ public class CDPClusterHealthcheck {
         Path fsckOutputPath = Paths.get(healthcheckReportConfig.getOutputDir() + "/hdfs-fsck.txt");
         Files.write(fsckOutputPath, hdfsFsck.getBytes(StandardCharsets.UTF_8));
 
+        //String kerberosLogin = shellCommandExecutorService.executeCommand("kinit <user>");
+        //Path kerberosLoginOutputPath = Paths.get(healthcheckReportConfig.getOutputDir() + "/kinit.txt");
+        //Files.write(kerberosLoginOutputPath, kerberosLogin.getBytes(StandardCharsets.UTF_8));
+
         // Inspect Hosts API For Performance/Networking Check
-        // clustersResourceApi.perfInspectorCommand("test")
         ApiCommand inspectHostCmd = clustersResourceApi.inspectHostsCommand("test");
-        return inspectHostCmd;
+        BigDecimal inspectHostCmdId = inspectHostCmd.getId();
+        ApiCommand inspectHostCmdDResultDto;
+        while (true) {
+             ApiCommand inspectHostCmdResult = commandsResourceApi.readCommand(inspectHostCmdId);
+             if (inspectHostCmdResult.getEndTime() == null) {
+                 try {
+                     Thread.sleep(1000);
+                 } catch (InterruptedException e) {
+                     System.out.println("error when sleep!");
+                 }
+             } else {
+                 inspectHostCmdDResultDto = inspectHostCmdResult;
+                 break;
+             }
+        }
+
+        // clustersResourceApi.perfInspectorCommand("test")
+
+        return inspectHostCmdDResultDto;
 
 
         // return dirCapacityDtos;
