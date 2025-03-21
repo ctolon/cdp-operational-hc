@@ -88,7 +88,7 @@ public class CDPClusterHealthcheck {
 
 
     @ShellMethod(key = "healthcheck", value = "CDP Healthcheck Command")
-    public List<DirCapacityDto> cdpOperationalHealthcheck () throws ApiException, IOException {
+    public ApiCommand cdpOperationalHealthcheck () throws ApiException, IOException {
 
 
         // Create Healthcheck report dir
@@ -319,11 +319,21 @@ public class CDPClusterHealthcheck {
         }
 
         // Shell Command Utilities
-        String safeModeCheck = shellCommandExecutorService.executeCommand("hdfs dfsadmin -safemode get");
-        Path path = Paths.get(healthcheckReportConfig.getOutputDir() + "/hdfs-safe-mode.txt");
-        Files.write(path, safeModeCheck.getBytes(StandardCharsets.UTF_8));
+        String hdfsSafeModeCheck = shellCommandExecutorService.executeCommand("hdfs dfsadmin -safemode get");
+        Path hdfsSafeModeOutputPath = Paths.get(healthcheckReportConfig.getOutputDir() + "/hdfs-safe-mode.txt");
+        Files.write(hdfsSafeModeOutputPath, hdfsSafeModeCheck.getBytes(StandardCharsets.UTF_8));
 
-        return dirCapacityDtos;
+        String hdfsFsck = shellCommandExecutorService.executeCommand("hdfs fsck /");
+        Path fsckOutputPath = Paths.get(healthcheckReportConfig.getOutputDir() + "/hdfs-fsck.txt");
+        Files.write(fsckOutputPath, hdfsFsck.getBytes(StandardCharsets.UTF_8));
+
+        // Inspect Hosts API For Performance/Networking Check
+        // clustersResourceApi.perfInspectorCommand("test")
+        ApiCommand inspectHostCmd = clustersResourceApi.inspectHostsCommand("test");
+        return inspectHostCmd;
+
+
+        // return dirCapacityDtos;
 
 
 
