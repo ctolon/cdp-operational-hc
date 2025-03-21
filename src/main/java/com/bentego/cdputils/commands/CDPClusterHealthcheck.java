@@ -8,10 +8,7 @@ import com.bentego.cdputils.dtos.ServiceTypesDto;
 import com.bentego.cdputils.dtos.SslCertificateDetailsDto;
 import com.bentego.cdputils.enums.DataUnit;
 import com.bentego.cdputils.enums.RoleConfigUIBinding;
-import com.bentego.cdputils.service.CommonHealthcheckService;
-import com.bentego.cdputils.service.DataUnitConverterService;
-import com.bentego.cdputils.service.FileManagerService;
-import com.bentego.cdputils.service.SSLCertificateService;
+import com.bentego.cdputils.service.*;
 import com.bentego.cdputils.utils.CustomStringUtils;
 import com.cloudera.api.swagger.*;
 import com.cloudera.api.swagger.client.ApiException;
@@ -23,6 +20,10 @@ import com.google.gson.Gson;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -36,6 +37,7 @@ public class CDPClusterHealthcheck {
 
     private final FileManagerService fileManagerService;
     private final SSLCertificateService sslCertificateService;
+    private final ShellCommandExecutorService shellCommandExecutorService;
 
     private final CommonHealthcheckService commonHealthcheckService;
     private final ServicesResourceApi servicesResourceApi;
@@ -54,6 +56,7 @@ public class CDPClusterHealthcheck {
             HealthcheckReportConfig healthcheckReportConfig,
             FileManagerService fileManagerService,
             SSLCertificateService sslCertificateService,
+            ShellCommandExecutorService shellCommandExecutorService,
             CommonHealthcheckService commonHealthcheckService,
             ServicesResourceApi servicesResourceApi,
             RoleConfigGroupsResourceApi roleConfigGroupsResourceApi,
@@ -70,6 +73,7 @@ public class CDPClusterHealthcheck {
         this.healthcheckReportConfig = healthcheckReportConfig;
         this.fileManagerService = fileManagerService;
         this.sslCertificateService = sslCertificateService;
+        this.shellCommandExecutorService = shellCommandExecutorService;
         this.commonHealthcheckService = commonHealthcheckService;
         this.servicesResourceApi = servicesResourceApi;
         this.roleConfigGroupsResourceApi = roleConfigGroupsResourceApi;
@@ -313,6 +317,11 @@ public class CDPClusterHealthcheck {
             // apiHost.getNumPhysicalCores();
             // apiHost.getHostname();
         }
+
+        // Shell Command Utilities
+        String safeModeCheck = shellCommandExecutorService.executeCommand("hdfs dfsadmin -safemode get");
+        Path path = Paths.get(healthcheckReportConfig.getOutputDir() + "/hdfs-safe-mode.txt");
+        Files.write(path, safeModeCheck.getBytes(StandardCharsets.UTF_8));
 
         return dirCapacityDtos;
 
