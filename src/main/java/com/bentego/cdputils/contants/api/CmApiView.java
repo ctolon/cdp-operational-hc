@@ -1,4 +1,4 @@
-package com.bentego.cdputils.contants;
+package com.bentego.cdputils.contants.api;
 
 public final class CmApiView {
     public static final String EXPORT = "EXPORT";
