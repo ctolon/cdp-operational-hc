@@ -6,11 +6,16 @@ import com.bentego.cdputils.enums.DataUnit;
 import com.cloudera.api.swagger.TimeSeriesResourceApi;
 import com.cloudera.api.swagger.client.ApiException;
 import com.cloudera.api.swagger.model.ApiTimeSeries;
+import com.cloudera.api.swagger.model.ApiTimeSeriesData;
 import com.cloudera.api.swagger.model.ApiTimeSeriesResponse;
 import com.cloudera.api.swagger.model.ApiTimeSeriesResponseList;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Consumer;
 
 @Service
 public class TimeSeriesService {
@@ -21,36 +26,33 @@ public class TimeSeriesService {
         this.timeSeriesResourceApi = timeSeriesResourceApi;
     }
 
+    private ApiTimeSeriesResponseList easyQueryTimeSeries(String query) throws ApiException {
+        return timeSeriesResourceApi.queryTimeSeries("application/json", "RAW", null, false, query, "now");
+    }
+
     public HdfsCapacityDto getGeneralHdfsCapacity() throws ApiException {
 
         HdfsCapacityDto hdfsCapacityDto = new HdfsCapacityDto();
         String hdfsGeneralCapacityQuery = TimeseriesQueryBuilder.buildHdfsCapacityCheckQuery();
-        ApiTimeSeriesResponseList hdfsGeneralCapacityTsResponse = timeSeriesResourceApi.queryTimeSeries("application/json",
-                "RAW",
-                null,
-                false,
-                hdfsGeneralCapacityQuery,
-                "now");
 
-        for (ApiTimeSeriesResponse apiTimeSeriesResponse: hdfsGeneralCapacityTsResponse.getItems()) {
-            for (ApiTimeSeries apiTimeSeries: apiTimeSeriesResponse.getTimeSeries()) {
+        ApiTimeSeriesResponseList hdfsGeneralCapacityTsResponse = easyQueryTimeSeries(hdfsGeneralCapacityQuery);
 
-                if (apiTimeSeries.getMetadata().getMetricName().equals("dfs_capacity")) {
-                    BigDecimal latestValue = apiTimeSeries.getData().get(apiTimeSeries.getData().size() -1).getValue();
-                    BigDecimal latestValueAsGb = DataUnitConverterService.convertFromBigDecimal(latestValue, DataUnit.BYTE, DataUnit.GIGABYTE);
-                    hdfsCapacityDto.setDfsCapacity(latestValueAsGb);
-                }
+        Map<String, Consumer<BigDecimal>> metricMap = new HashMap<>();
+        metricMap.put("dfs_capacity", hdfsCapacityDto::setDfsCapacity);
+        metricMap.put("dfs_capacity_used", hdfsCapacityDto::setDfsCapacityUsed);
+        metricMap.put("dfs_capacity_used_non_hdfs", hdfsCapacityDto::setDfsCapacityUsedNonHdfs);
 
-                if (apiTimeSeries.getMetadata().getMetricName().equals("dfs_capacity_used")) {
-                    BigDecimal latestValue = apiTimeSeries.getData().get(apiTimeSeries.getData().size() -1).getValue();
-                    BigDecimal latestValueAsGb = DataUnitConverterService.convertFromBigDecimal(latestValue, DataUnit.BYTE, DataUnit.GIGABYTE);
-                    hdfsCapacityDto.setDfsCapacityUsed(latestValueAsGb);
-                }
+        for (ApiTimeSeriesResponse apiTimeSeriesResponse : hdfsGeneralCapacityTsResponse.getItems()) {
+            for (ApiTimeSeries apiTimeSeries : apiTimeSeriesResponse.getTimeSeries()) {
+                String metricName = apiTimeSeries.getMetadata().getMetricName();
 
-                if (apiTimeSeries.getMetadata().getMetricName().equals("dfs_capacity_used_non_hdfs")) {
-                    BigDecimal latestValue = apiTimeSeries.getData().get(apiTimeSeries.getData().size() -1).getValue();
-                    BigDecimal latestValueAsGb = DataUnitConverterService.convertFromBigDecimal(latestValue, DataUnit.BYTE, DataUnit.GIGABYTE);
-                    hdfsCapacityDto.setDfsCapacityUsedNonHdfs(latestValueAsGb);
+                if (metricMap.containsKey(metricName)) {
+                    List<ApiTimeSeriesData> dataList = apiTimeSeries.getData();
+                    if (!dataList.isEmpty()) {
+                        BigDecimal latestValue = dataList.get(dataList.size() - 1).getValue();
+                        BigDecimal latestValueAsGb = DataUnitConverterService.convertFromBigDecimal(latestValue, DataUnit.BYTE, DataUnit.GIGABYTE);
+                        metricMap.get(metricName).accept(latestValueAsGb);
+                    }
                 }
             }
         }
