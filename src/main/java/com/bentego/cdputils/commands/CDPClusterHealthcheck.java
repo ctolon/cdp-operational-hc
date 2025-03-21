@@ -6,8 +6,10 @@ import com.bentego.cdputils.contants.roleconfig.HdfsRoleConfigGroupName;
 import com.bentego.cdputils.dtos.DirCapacityDto;
 import com.bentego.cdputils.dtos.ServiceTypesDto;
 import com.bentego.cdputils.dtos.SslCertificateDetailsDto;
+import com.bentego.cdputils.enums.DataUnit;
 import com.bentego.cdputils.enums.RoleConfigUIBinding;
 import com.bentego.cdputils.service.CommonHealthcheckService;
+import com.bentego.cdputils.service.DataUnitConverterService;
 import com.bentego.cdputils.service.FileManagerService;
 import com.bentego.cdputils.service.SSLCertificateService;
 import com.bentego.cdputils.utils.CustomStringUtils;
@@ -82,7 +84,7 @@ public class CDPClusterHealthcheck {
 
 
     @ShellMethod(key = "healthcheck", value = "CDP Healthcheck Command")
-    public List<ServiceTypesDto> cdpOperationalHealthcheck () throws ApiException, IOException {
+    public List<DirCapacityDto> cdpOperationalHealthcheck () throws ApiException, IOException {
 
 
         // Create Healthcheck report dir
@@ -135,11 +137,10 @@ public class CDPClusterHealthcheck {
             }
         }
 
-        return modifiedServiceTypesDtos;
+        // return modifiedServiceTypesDtos;
 
-        /*
 
-        // HDFS Role Config list for checking directories
+        // HDFS Role Config list for checking and finding directories path
         String hdfsNamenodeDir = "";
         String hdfsDatanodeDir = "";
         String hdfsJournalnodeDir = "";
@@ -171,6 +172,8 @@ public class CDPClusterHealthcheck {
             }
         }
 
+        // Get Capacity of Directories for HDFS
+        List<DirCapacityDto> dirCapacityDtos = new ArrayList<>();
         ApiHostList apiHostList = hostsResourceApi.readHosts("", "", CmApiView.FULL);
         for (ApiHost apiHost: apiHostList.getItems()) {
             for (ApiRoleRef apiRoleRef: apiHost.getRoleRefs()) {
@@ -204,15 +207,18 @@ public class CDPClusterHealthcheck {
 
                             if (apiTimeSeries.getMetadata().getMetricName().equals("capacity_used")) {
                                 BigDecimal dataNodeDirCapacityUsed = apiTimeSeries.getData().get(apiTimeSeries.getData().size() -1).getValue();
-                                hdfsDataNodeDirCapacity.setCapacityUsed(dataNodeDirCapacityUsed);
+                                BigDecimal dataNodeDirCapacityUsedAsGb = DataUnitConverterService.convertFromBigDecimal(dataNodeDirCapacityUsed, DataUnit.BYTE, DataUnit.GIGABYTE);
+                                hdfsDataNodeDirCapacity.setCapacityUsed(dataNodeDirCapacityUsedAsGb);
                             }
 
                             if (apiTimeSeries.getMetadata().getMetricName().equals("capacity")) {
                                 BigDecimal dataNodeDirCapacity = apiTimeSeries.getData().get(apiTimeSeries.getData().size() -1).getValue();
-                                hdfsDataNodeDirCapacity.setCapacity(dataNodeDirCapacity);
+                                BigDecimal dataNodeDirCapacityAsGb = DataUnitConverterService.convertFromBigDecimal(dataNodeDirCapacity, DataUnit.BYTE, DataUnit.GIGABYTE);
+                                hdfsDataNodeDirCapacity.setCapacity(dataNodeDirCapacityAsGb);
                             }
                         }
                     }
+                    dirCapacityDtos.add(hdfsDataNodeDirCapacity);
                 }
 
                 // HDFS JournalNode
@@ -244,15 +250,18 @@ public class CDPClusterHealthcheck {
 
                             if (apiTimeSeries.getMetadata().getMetricName().equals("capacity_used")) {
                                 BigDecimal journalNodeDirCapacityUsed = apiTimeSeries.getData().get(apiTimeSeries.getData().size() -1).getValue();
-                                hdfsJournalNodeDirCapacity.setCapacityUsed(journalNodeDirCapacityUsed);
+                                BigDecimal journalNodeDirCapacityUsedAsGb = DataUnitConverterService.convertFromBigDecimal(journalNodeDirCapacityUsed, DataUnit.BYTE, DataUnit.GIGABYTE);
+                                hdfsJournalNodeDirCapacity.setCapacityUsed(journalNodeDirCapacityUsedAsGb);
                             }
 
                             if (apiTimeSeries.getMetadata().getMetricName().equals("capacity")) {
                                 BigDecimal journalNodeDirCapacity = apiTimeSeries.getData().get(apiTimeSeries.getData().size() -1).getValue();
-                                hdfsJournalNodeDirCapacity.setCapacity(journalNodeDirCapacity);
+                                BigDecimal journalNodeDirCapacityAsGb = DataUnitConverterService.convertFromBigDecimal(journalNodeDirCapacity, DataUnit.BYTE, DataUnit.GIGABYTE);
+                                hdfsJournalNodeDirCapacity.setCapacity(journalNodeDirCapacityAsGb);
                             }
                         }
                     }
+                    dirCapacityDtos.add(hdfsJournalNodeDirCapacity);
                 }
 
                 // HDFS NameNode
@@ -284,15 +293,18 @@ public class CDPClusterHealthcheck {
 
                             if (apiTimeSeries.getMetadata().getMetricName().equals("capacity_used")) {
                                 BigDecimal nameNodeDirCapacityUsed = apiTimeSeries.getData().get(apiTimeSeries.getData().size() -1).getValue();
-                                hdfsNameNodeDirCapacity.setCapacityUsed(nameNodeDirCapacityUsed);
+                                BigDecimal nameNodeDirCapacityUsedAsGb = DataUnitConverterService.convertFromBigDecimal(nameNodeDirCapacityUsed, DataUnit.BYTE, DataUnit.GIGABYTE);
+                                hdfsNameNodeDirCapacity.setCapacityUsed(nameNodeDirCapacityUsedAsGb);
                             }
 
                             if (apiTimeSeries.getMetadata().getMetricName().equals("capacity")) {
                                 BigDecimal nameNodeDirCapacity = apiTimeSeries.getData().get(apiTimeSeries.getData().size() -1).getValue();
-                                hdfsNameNodeDirCapacity.setCapacity(nameNodeDirCapacity);
+                                BigDecimal nameNodeDirCapacityAsGb = DataUnitConverterService.convertFromBigDecimal(nameNodeDirCapacity, DataUnit.BYTE, DataUnit.GIGABYTE);
+                                hdfsNameNodeDirCapacity.setCapacity(nameNodeDirCapacityAsGb);
                             }
                         }
                     }
+                    dirCapacityDtos.add(hdfsNameNodeDirCapacity);
                 }
             }
 
@@ -302,8 +314,10 @@ public class CDPClusterHealthcheck {
             // apiHost.getHostname();
         }
 
+        return dirCapacityDtos;
 
-         */
+
+
 
 
         // CDP General Configurations
