@@ -38,9 +38,9 @@ public class CDPClusterHealthcheck {
     private final FileManagerService fileManagerService;
     private final SSLCertificateService sslCertificateService;
     private final ShellCommandExecutorService shellCommandExecutorService;
+    private final InspectPerformanceService inspectPerformanceService;
     private final CommonHealthcheckService commonHealthcheckService;
 
-    private final CommandsResourceApi commandsResourceApi;
     private final ServicesResourceApi servicesResourceApi;
     private final RoleConfigGroupsResourceApi roleConfigGroupsResourceApi;
     private final AllHostsResourceApi allHostsResourceApi;
@@ -58,8 +58,8 @@ public class CDPClusterHealthcheck {
             FileManagerService fileManagerService,
             SSLCertificateService sslCertificateService,
             ShellCommandExecutorService shellCommandExecutorService,
+            InspectPerformanceService inspectPerformanceService,
             CommonHealthcheckService commonHealthcheckService,
-            CommandsResourceApi commandsResourceApi,
             ServicesResourceApi servicesResourceApi,
             RoleConfigGroupsResourceApi roleConfigGroupsResourceApi,
             AllHostsResourceApi allHostsResourceApi,
@@ -76,8 +76,8 @@ public class CDPClusterHealthcheck {
         this.fileManagerService = fileManagerService;
         this.sslCertificateService = sslCertificateService;
         this.shellCommandExecutorService = shellCommandExecutorService;
+        this.inspectPerformanceService = inspectPerformanceService;
         this.commonHealthcheckService = commonHealthcheckService;
-        this.commandsResourceApi = commandsResourceApi;
         this.servicesResourceApi = servicesResourceApi;
         this.roleConfigGroupsResourceApi = roleConfigGroupsResourceApi;
         this.allHostsResourceApi = allHostsResourceApi;
@@ -336,25 +336,20 @@ public class CDPClusterHealthcheck {
 
         // Inspect Hosts API For Performance/Networking Check
         ApiCommand inspectHostCmd = clustersResourceApi.inspectHostsCommand("test");
-        BigDecimal inspectHostCmdId = inspectHostCmd.getId();
-        ApiCommand inspectHostCmdDResultDto;
-        while (true) {
-             ApiCommand inspectHostCmdResult = commandsResourceApi.readCommand(inspectHostCmdId);
-             if (inspectHostCmdResult.getEndTime() == null) {
-                 try {
-                     Thread.sleep(1000);
-                 } catch (InterruptedException e) {
-                     System.out.println("error when sleep!");
-                 }
-             } else {
-                 inspectHostCmdDResultDto = inspectHostCmdResult;
-                 break;
-             }
-        }
+        ApiCommand inspectHostCmdResult = inspectPerformanceService.runInspectorCmd(inspectHostCmd);
 
-        // clustersResourceApi.perfInspectorCommand("test")
+        // Inspect Network Performance API for Performance/Networking Check
+        ApiClusterPerfInspectorArgs perfInspectorArgs = new ApiClusterPerfInspectorArgs();
+        ApiPerfInspectorPingArgs apiPerfInspectorPingArgs = new ApiPerfInspectorPingArgs();
+        apiPerfInspectorPingArgs.setPingTimeoutSecs(BigDecimal.valueOf(10));
+        apiPerfInspectorPingArgs.setPingCount(BigDecimal.valueOf(10));
+        apiPerfInspectorPingArgs.setPingPacketSizeBytes(BigDecimal.valueOf(56));
+        perfInspectorArgs.setPingArgs(apiPerfInspectorPingArgs);
+        ApiCommand perfInspectorCmd = clustersResourceApi.perfInspectorCommand("test", perfInspectorArgs);
+        ApiCommand perfInspectCmdResult = inspectPerformanceService.runInspectorCmd(perfInspectorCmd);
 
-        return inspectHostCmdDResultDto;
+
+        return perfInspectCmdResult;
 
 
         // return dirCapacityDtos;
