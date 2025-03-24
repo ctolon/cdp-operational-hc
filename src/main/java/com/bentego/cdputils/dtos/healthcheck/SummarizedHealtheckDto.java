@@ -1,3 +1,4 @@
+/*
 package com.bentego.cdputils.dtos.healthcheck;
 
 import lombok.AllArgsConstructor;
@@ -11,3 +12,5 @@ import lombok.NoArgsConstructor;
 @Builder
 public class SummarizedHealtheckDto {
 }
+
+ */
