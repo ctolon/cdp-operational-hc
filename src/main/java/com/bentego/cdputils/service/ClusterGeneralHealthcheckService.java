@@ -109,7 +109,7 @@ public class ClusterGeneralHealthcheckService {
 
         // Role Based
         for (String serviceName : serviceTypes) {
-            ApiRoleList apiRoleList = rolesResourceApi.readRoles(clusterName, serviceName, null, CmApiView.SUMMARY);
+            ApiRoleList apiRoleList = rolesResourceApi.readRoles(clusterName, serviceName, null, CmApiView.FULL_WITH_HEALTH_CHECK_EXPLANATION);
             for (ApiRole apiRole : apiRoleList.getItems()) {
                 for (ApiHealthCheck healthCheck : apiRole.getHealthChecks()) {
                     String roleHcName = healthCheck.getName();

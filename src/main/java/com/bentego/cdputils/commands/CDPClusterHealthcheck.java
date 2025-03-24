@@ -116,7 +116,7 @@ public class CDPClusterHealthcheck {
         fileManagerService.mkdirIfNotExistsAs755(healthcheckReportConfig.getOutputDir());
 
         // Get Host List
-        ApiHostList apiHostList = hostsResourceApi.readHosts(null, null, CmApiView.FULL);
+        ApiHostList apiHostList = hostsResourceApi.readHosts(null, null, CmApiView.FULL_WITH_HEALTH_CHECK_EXPLANATION);
 
 
         // Get ServiceList
