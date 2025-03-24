@@ -110,7 +110,6 @@ public class ClusterGeneralHealthcheckService {
         // Role Based
         for (String serviceName : serviceTypes) {
             ApiRoleList apiRoleList = rolesResourceApi.readRoles(clusterName, serviceName, null, CmApiView.FULL_WITH_HEALTH_CHECK_EXPLANATION);
-            logger.info(apiRoleList.toString());
             for (ApiRole apiRole : apiRoleList.getItems()) {
                 for (ApiHealthCheck healthCheck : apiRole.getHealthChecks()) {
                     String roleHcName = healthCheck.getName();
@@ -144,10 +143,9 @@ public class ClusterGeneralHealthcheckService {
                 }
             }
         }
-
+        clusterWideHealthcheckDto.setHostBadHealthcheckDtos(hostBadHealthcheckDtos);
         clusterWideHealthcheckDto.setServiceBadHealthcheckDtos(serviceBadHealthcheckDtos);
         clusterWideHealthcheckDto.setRoleBadHealthcheckDtos(roleBadHealthcheckDtos);
-        clusterWideHealthcheckDto.setServiceBadHealthcheckDtos(serviceBadHealthcheckDtos);
 
         return clusterWideHealthcheckDto;
     }
