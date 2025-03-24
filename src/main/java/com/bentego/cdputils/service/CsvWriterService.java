@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import java.io.FileWriter;
 import java.io.IOException;
+import java.util.List;
 
 @Service
 public class CsvWriterService {
@@ -40,21 +41,24 @@ public class CsvWriterService {
             };
             writer.writeNext(header);
 
-            for (RoleBadHealthcheckDto data : clusterWideBadHealthcheckDto.getRoleBadHealthcheckDtos()) {
-                String[] row = {
-                        data.getRoleName(),
-                        data.getRoleType(),
-                        data.getRoleConfigGroupName(),
-                        data.getServiceName(),
-                        data.getServiceDisplayName(),
-                        data.getHostId(),
-                        data.getHostname(),
-                        data.getHealthcheckDto().getHealthcheckName(),
-                        data.getHealthcheckDto().getHealthcheckSummary(),
-                        data.getHealthcheckDto().getHealthcheckExplanation(),
-                        data.getHealthcheckDto().getHealthcheckSuppressed().toString()
-                };
-                writer.writeNext(row);
+            List<RoleBadHealthcheckDto> roleBadHealthcheckDtoList = clusterWideBadHealthcheckDto.getRoleBadHealthcheckDtos();
+            if (roleBadHealthcheckDtoList != null && !roleBadHealthcheckDtoList.isEmpty()) {
+                for (RoleBadHealthcheckDto data : roleBadHealthcheckDtoList) {
+                    String[] row = {
+                            data.getRoleName(),
+                            data.getRoleType(),
+                            data.getRoleConfigGroupName(),
+                            data.getServiceName(),
+                            data.getServiceDisplayName(),
+                            data.getHostId(),
+                            data.getHostname(),
+                            data.getHealthcheckDto().getHealthcheckName(),
+                            data.getHealthcheckDto().getHealthcheckSummary(),
+                            data.getHealthcheckDto().getHealthcheckExplanation(),
+                            data.getHealthcheckDto().getHealthcheckSuppressed().toString()
+                    };
+                    writer.writeNext(row);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -77,17 +81,20 @@ public class CsvWriterService {
             };
             writer.writeNext(header);
 
-            for (ServiceBadHealthcheckDto data : clusterWideBadHealthcheckDto.getServiceBadHealthcheckDtos()) {
-                String[] row = {
-                        data.getServiceName(),
-                        data.getServiceDisplayName(),
-                        data.getServiceType(),
-                        data.getHealthcheckDto().getHealthcheckName(),
-                        data.getHealthcheckDto().getHealthcheckSummary(),
-                        data.getHealthcheckDto().getHealthcheckExplanation(),
-                        data.getHealthcheckDto().getHealthcheckSuppressed().toString()
-                };
-                writer.writeNext(row);
+            List<ServiceBadHealthcheckDto> serviceBadHealthcheckDtoList = clusterWideBadHealthcheckDto.getServiceBadHealthcheckDtos();
+            if (serviceBadHealthcheckDtoList != null && !serviceBadHealthcheckDtoList.isEmpty()) {
+                for (ServiceBadHealthcheckDto data : serviceBadHealthcheckDtoList) {
+                    String[] row = {
+                            data.getServiceName(),
+                            data.getServiceDisplayName(),
+                            data.getServiceType(),
+                            data.getHealthcheckDto().getHealthcheckName(),
+                            data.getHealthcheckDto().getHealthcheckSummary(),
+                            data.getHealthcheckDto().getHealthcheckExplanation(),
+                            data.getHealthcheckDto().getHealthcheckSuppressed().toString()
+                    };
+                    writer.writeNext(row);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
@@ -109,16 +116,19 @@ public class CsvWriterService {
             };
             writer.writeNext(header);
 
-            for (HostBadHealthcheckDto data : clusterWideBadHealthcheckDto.getHostBadHealthcheckDtos()) {
-                String[] row = {
-                        data.getHostId(),
-                        data.getHostname(),
-                        data.getHealthcheckDto().getHealthcheckName(),
-                        data.getHealthcheckDto().getHealthcheckSummary(),
-                        data.getHealthcheckDto().getHealthcheckExplanation(),
-                        data.getHealthcheckDto().getHealthcheckSuppressed().toString()
-                };
-                writer.writeNext(row);
+            List<HostBadHealthcheckDto> hostBadHealthcheckDtoList = clusterWideBadHealthcheckDto.getHostBadHealthcheckDtos();
+            if (hostBadHealthcheckDtoList != null && !hostBadHealthcheckDtoList.isEmpty()) {
+                for (HostBadHealthcheckDto data : hostBadHealthcheckDtoList) {
+                    String[] row = {
+                            data.getHostId(),
+                            data.getHostname(),
+                            data.getHealthcheckDto().getHealthcheckName(),
+                            data.getHealthcheckDto().getHealthcheckSummary(),
+                            data.getHealthcheckDto().getHealthcheckExplanation(),
+                            data.getHealthcheckDto().getHealthcheckSuppressed().toString()
+                    };
+                    writer.writeNext(row);
+                }
             }
         } catch (IOException e) {
             e.printStackTrace();
