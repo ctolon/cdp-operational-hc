@@ -44,6 +44,9 @@ public class CsvWriterService {
             List<RoleBadHealthcheckDto> roleBadHealthcheckDtoList = clusterWideBadHealthcheckDto.getRoleBadHealthcheckDtos();
             if (roleBadHealthcheckDtoList != null && !roleBadHealthcheckDtoList.isEmpty()) {
                 for (RoleBadHealthcheckDto data : roleBadHealthcheckDtoList) {
+
+                    logger.info("{}", data.getHealthcheckDto().getHealthcheckExplanation());
+
                     String[] row = {
                             data.getRoleName(),
                             data.getRoleType(),
