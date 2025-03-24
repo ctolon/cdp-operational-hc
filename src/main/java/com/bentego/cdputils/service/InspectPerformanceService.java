@@ -3,6 +3,8 @@ package com.bentego.cdputils.service;
 import com.cloudera.api.swagger.CommandsResourceApi;
 import com.cloudera.api.swagger.client.ApiException;
 import com.cloudera.api.swagger.model.ApiCommand;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -11,6 +13,7 @@ import java.math.BigDecimal;
 public class InspectPerformanceService {
 
     private final CommandsResourceApi commandsResourceApi;
+    Logger logger = LoggerFactory.getLogger(InspectPerformanceService.class);
 
     public InspectPerformanceService(CommandsResourceApi commandsResourceApi) {
         this.commandsResourceApi = commandsResourceApi;
@@ -29,7 +32,7 @@ public class InspectPerformanceService {
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
-                    System.out.println("error when sleep!");
+                    logger.error("error when sleep on thread for inspect command!");
                 }
                 inspectorLoopCounter++;
             } else {

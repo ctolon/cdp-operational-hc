@@ -1,5 +1,7 @@
 package com.bentego.cdputils.service;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
@@ -7,6 +9,8 @@ import java.io.InputStreamReader;
 
 @Service
 public class ShellCommandExecutorService {
+
+    Logger logger = LoggerFactory.getLogger(ShellCommandExecutorService.class);
 
     public ShellCommandExecutorService() {
 
@@ -17,6 +21,7 @@ public class ShellCommandExecutorService {
 
         try {
             ProcessBuilder processBuilder = new ProcessBuilder();
+            logger.info("shell command to run: {}", command);
             processBuilder.command("bash", "-c", command);
 
             Process process = processBuilder.start();
@@ -33,7 +38,7 @@ public class ShellCommandExecutorService {
             try (BufferedReader errorReader = new BufferedReader(new InputStreamReader(process.getErrorStream()))) {
                 String errorLine;
                 while ((errorLine = errorReader.readLine()) != null) {
-                    System.err.println("command error: " + errorLine);
+                    logger.error("command error: {}", errorLine);
                 }
             }
 
