@@ -2,7 +2,9 @@ package com.bentego.cdputils.service;
 
 import com.cloudera.api.swagger.CommandsResourceApi;
 import com.cloudera.api.swagger.client.ApiException;
+import com.cloudera.api.swagger.model.ApiClusterPerfInspectorArgs;
 import com.cloudera.api.swagger.model.ApiCommand;
+import com.cloudera.api.swagger.model.ApiPerfInspectorPingArgs;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -41,5 +43,15 @@ public class InspectPerformanceService {
             }
         }
         return inspectorCmdResultDto;
+    }
+
+    public ApiClusterPerfInspectorArgs buildDefaultApiClusterPerfInspectorArgs() {
+        ApiClusterPerfInspectorArgs perfInspectorArgs = new ApiClusterPerfInspectorArgs();
+        ApiPerfInspectorPingArgs apiPerfInspectorPingArgs = new ApiPerfInspectorPingArgs();
+        apiPerfInspectorPingArgs.setPingTimeoutSecs(BigDecimal.valueOf(10));
+        apiPerfInspectorPingArgs.setPingCount(BigDecimal.valueOf(10));
+        apiPerfInspectorPingArgs.setPingPacketSizeBytes(BigDecimal.valueOf(56));
+        perfInspectorArgs.setPingArgs(apiPerfInspectorPingArgs);
+        return perfInspectorArgs;
     }
 }

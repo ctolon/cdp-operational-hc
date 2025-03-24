@@ -1,0 +1,16 @@
+package com.bentego.cdputils.dtos.healthcheck;
+
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class HostBadHealthcheckDto {
+    private String hostname;
+    private String hostId;
+    private BaseHealthcheckDto healthcheckDto;
+}

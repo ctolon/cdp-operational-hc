@@ -3,10 +3,8 @@ import com.bentego.cdputils.builder.TimeseriesQueryBuilder;
 import com.bentego.cdputils.configuration.HealthcheckReportConfig;
 import com.bentego.cdputils.contants.api.CmApiView;
 import com.bentego.cdputils.contants.roleconfig.HdfsRoleConfigGroupName;
-import com.bentego.cdputils.dtos.DirCapacityDto;
-import com.bentego.cdputils.dtos.HdfsCapacityDto;
-import com.bentego.cdputils.dtos.ServiceTypesDto;
-import com.bentego.cdputils.dtos.SslCertificateDetailsDto;
+import com.bentego.cdputils.dtos.*;
+import com.bentego.cdputils.dtos.healthcheck.ClusterWideBadHealthcheckDto;
 import com.bentego.cdputils.enums.DataUnit;
 import com.bentego.cdputils.enums.RoleConfigUIBinding;
 import com.bentego.cdputils.service.*;
@@ -46,12 +44,15 @@ public class CDPClusterHealthcheck {
     private final ShellCommandExecutorService shellCommandExecutorService;
     private final InspectPerformanceService inspectPerformanceService;
     private final TimeSeriesService timeSeriesService;
+    private final ClusterGeneraInfoService clusterGeneraInfoService;
+    private final DirLocatorService dirLocatorService;
+    private final ClusterGeneralHealthcheckService clusterGeneralHealthcheckService;
+    private final CsvWriterService csvWriterService;
 
     private final ServicesResourceApi servicesResourceApi;
     private final RoleConfigGroupsResourceApi roleConfigGroupsResourceApi;
     private final AllHostsResourceApi allHostsResourceApi;
     private final CertManagerResourceApi certManagerResourceApi;
-    private final ClouderaManagerResourceApi clouderaManagerResourceApi;
     private final ClustersResourceApi clustersResourceApi;
     private final HostsResourceApi hostsResourceApi;
     private final RolesResourceApi rolesResourceApi;
@@ -65,11 +66,14 @@ public class CDPClusterHealthcheck {
             ShellCommandExecutorService shellCommandExecutorService,
             InspectPerformanceService inspectPerformanceService,
             TimeSeriesService timeSeriesService,
+            ClusterGeneraInfoService clusterGeneraInfoService,
+            DirLocatorService dirLocatorService,
+            ClusterGeneralHealthcheckService clusterGeneralHealthcheckService,
+            CsvWriterService csvWriterService,
             ServicesResourceApi servicesResourceApi,
             RoleConfigGroupsResourceApi roleConfigGroupsResourceApi,
             AllHostsResourceApi allHostsResourceApi,
             CertManagerResourceApi certManagerResourceApi,
-            ClouderaManagerResourceApi clouderaManagerResourceApi,
             ClustersResourceApi clustersResourceApi,
             HostsResourceApi hostsResourceApi,
             RolesResourceApi rolesResourceApi
@@ -82,11 +86,14 @@ public class CDPClusterHealthcheck {
         this.shellCommandExecutorService = shellCommandExecutorService;
         this.inspectPerformanceService = inspectPerformanceService;
         this.timeSeriesService = timeSeriesService;
+        this.clusterGeneraInfoService = clusterGeneraInfoService;
+        this.dirLocatorService = dirLocatorService;
+        this.clusterGeneralHealthcheckService = clusterGeneralHealthcheckService;
+        this.csvWriterService = csvWriterService;
         this.servicesResourceApi = servicesResourceApi;
         this.roleConfigGroupsResourceApi = roleConfigGroupsResourceApi;
         this.allHostsResourceApi = allHostsResourceApi;
         this.certManagerResourceApi = certManagerResourceApi;
-        this.clouderaManagerResourceApi = clouderaManagerResourceApi;
         this.clustersResourceApi = clustersResourceApi;
         this.hostsResourceApi = hostsResourceApi;
         this.rolesResourceApi = rolesResourceApi;
@@ -99,40 +106,18 @@ public class CDPClusterHealthcheck {
             @ShellOption(defaultValue = ShellOption.NULL, value = { "--kinit-user", "-k"}) String kinitUser)
             throws ApiException, IOException {
 
-
         logger.info("Starting healthcheck for CDP Cluster: {}", clusterName);
 
         logger.info("General informations for Cluster:");
-        // Cluster General
-        // CDP General Configurations
-        // ApiConfigList allHostsConfig = allHostsResourceApi.readConfig(CmApiView.FULL);
-        // gson.toJson(allHostsConfig, new FileWriter(healthcheckReportConfig.getOutputDir() + "/all-hosts-config.json"));
-
-
-        //clouderaManagerResourceApi.getConfig(CmApiView.FULL_WITH_HEALTH_CHECK_EXPLANATION);
-
-        //clouderaManagerResourceApi.getDeployment2(CmApiView.EXPORT);
-
-        //clouderaManagerResourceApi.readInstances();
-
-        //clouderaManagerResourceApi.getKerberosInfo();
-
-        //clouderaManagerResourceApi.getKerberosPrincipals(false);
-
-        //clouderaManagerResourceApi.getKrb5Conf();
-
-        //clouderaManagerResourceApi.readLicense();
-
-        //clouderaManagerResourceApi.getScmDbInfo();
-
-        //clouderaManagerResourceApi.getVersion();
-
-        // Certificate Check
-        // certManagerResourceApi.getTruststore("PEM");
+        clusterGeneraInfoService.retrieveClusterGeneralInfo();
 
         // Create Healthcheck report dir
         logger.info("creating Logging/reporting root Directory as {} with Permission 755...", healthcheckReportConfig.getOutputDir());
         fileManagerService.mkdirIfNotExistsAs755(healthcheckReportConfig.getOutputDir());
+
+        // Get Host List
+        ApiHostList apiHostList = hostsResourceApi.readHosts(null, null, CmApiView.FULL);
+
 
         // Get ServiceList
         List<String> serviceTypes = new ArrayList<>();
@@ -141,12 +126,14 @@ public class CDPClusterHealthcheck {
         ApiServiceList serviceList = servicesResourceApi.readServices(clusterName, CmApiView.FULL_WITH_HEALTH_CHECK_EXPLANATION);
         for (ApiService apiService: serviceList.getItems()) {
             serviceTypes.add(apiService.getName());
-            logger.info("service Type Found: {}", apiService.getName());
+            logger.info("service Type found: {}", apiService.getName());
             if (apiService.getMaintenanceMode()) {
                 servicesInMaintenanceMode.add(apiService.getName());
                 logger.warn("service found in maintenance mode: {}", apiService.getName());
             }
         }
+        logger.info("total service in cluster: {}", serviceTypes.size());
+
         if (servicesInMaintenanceMode.isEmpty()) {
             logger.info("no Service found in maintenance Mode.");
         }
@@ -175,6 +162,15 @@ public class CDPClusterHealthcheck {
             }
         }
 
+        // Get Bad healtchecks
+        logger.info("get cluster-wide healtcheck reports as csv...");
+        ClusterWideBadHealthcheckDto clusterWideBadHealthcheckDto = clusterGeneralHealthcheckService.getClusterWideHealthcheck(clusterName, apiHostList, serviceList, serviceTypes);
+
+        csvWriterService.writeHostBadHealtcheckCsvToDisk(clusterWideBadHealthcheckDto, healthcheckReportConfig.getOutputDir() + "/host_bad_healtcheck.csv");
+        csvWriterService.writeServiceBadHealtcheckCsvToDisk(clusterWideBadHealthcheckDto, healthcheckReportConfig.getOutputDir() + "/service_bad_healtcheck.csv");
+        csvWriterService.writeRoleBadHealtcheckCsvToDisk(clusterWideBadHealthcheckDto, healthcheckReportConfig.getOutputDir() + "/role_bad_healtcheck.csv");
+
+
         // Check CDP UI Certificates
         logger.info("checking SSL Certificates for services w/web interface...");
         List<ServiceTypesDto> modifiedServiceTypesDtos = new ArrayList<>();
@@ -193,70 +189,41 @@ public class CDPClusterHealthcheck {
 
 
         // HDFS Role Config list for checking and finding directories path
-        String hdfsNamenodeDir = "";
-        String hdfsDatanodeDir = "";
-        String hdfsJournalnodeDir = "";
-
+        List<DirCapacityDto> dirCapacityDtos = new ArrayList<>();
+        HdfsDirLocationDto hdfsDirLocationDto = new HdfsDirLocationDto();
         if (serviceTypes.contains("hdfs")) {
 
             logger.info("Cluster has hdfs service. Checking Directory Path for Namenode, Journalnode and Namenode in configuration...");
 
-            // Namenode
-            ApiRoleConfigGroup hdfsNamenodeRoleConfigGroup = roleConfigGroupsResourceApi.readRoleConfigGroup(clusterName, HdfsRoleConfigGroupName.NAMENODE, "hdfs");
-            for (ApiConfig apiConfig: hdfsNamenodeRoleConfigGroup.getConfig().getItems()) {
-                if (apiConfig.getName().contains("dir_list") && apiConfig.getValue().startsWith("/")) {
-                    hdfsNamenodeDir = apiConfig.getValue();
-                    logger.info("hdfs namenode directory path for cluster: {}", hdfsNamenodeDir);
-                }
-            }
-
-            // Datanode
-            ApiRoleConfigGroup hdfsDatanodeRoleConfigGroup = roleConfigGroupsResourceApi.readRoleConfigGroup(clusterName, HdfsRoleConfigGroupName.DATANODE, "hdfs");
-            for (ApiConfig apiConfig: hdfsDatanodeRoleConfigGroup.getConfig().getItems()) {
-                if (apiConfig.getName().contains("dir_list") && apiConfig.getValue().startsWith("/")) {
-                    hdfsDatanodeDir = apiConfig.getValue();
-                    logger.info("hdfs datanode directory path for cluster: {}", hdfsDatanodeDir);
-                }
-            }
-
-            // Journalnode
-            ApiRoleConfigGroup hdfsJournalnodeRoleConfigGroup = roleConfigGroupsResourceApi.readRoleConfigGroup(clusterName, HdfsRoleConfigGroupName.JOURNALNODE, "hdfs");
-            for (ApiConfig apiConfig: hdfsNamenodeRoleConfigGroup.getConfig().getItems()) {
-                if (apiConfig.getName().contains("dir_list") && apiConfig.getValue().startsWith("/")) {
-                    hdfsJournalnodeDir = apiConfig.getValue();
-                    logger.info("hdfs journalnode directory path for cluster: {}", hdfsDatanodeDir);
-                }
-            }
+            dirLocatorService.setHdfsDirLocations(hdfsDirLocationDto ,clusterName);
 
             // HDFS General Charts
             HdfsCapacityDto hdfsCapacityDto = timeSeriesService.getGeneralHdfsCapacity();
 
+            // Get Capacity of Directories for HDFS
+            for (ApiHost apiHost: apiHostList.getItems()) {
+                for (ApiRoleRef apiRoleRef: apiHost.getRoleRefs()) {
+
+                    // HDFS DataNode
+                    if (apiRoleRef.getRoleName().contains(HdfsRoleConfigGroupName.DATANODE_0)) {
+                        DirCapacityDto hdfsDataNodeDirCapacity = timeSeriesService.getDataNodeHdfsCapacity(hdfsDirLocationDto.getDataNodeDir(), apiHost);
+                        dirCapacityDtos.add(hdfsDataNodeDirCapacity);
+                    }
+
+                    // HDFS JournalNode
+                    if (apiRoleRef.getRoleName().contains(HdfsRoleConfigGroupName.JOURNALNODE_0)) {
+                        DirCapacityDto hdfsJournalNodeDirCapacity = timeSeriesService.getDataNodeHdfsCapacity(hdfsDirLocationDto.getJournalNodeDir(), apiHost);
+                        dirCapacityDtos.add(hdfsJournalNodeDirCapacity);
+                    }
+
+                    // HDFS NameNode
+                    if (apiRoleRef.getRoleName().contains(HdfsRoleConfigGroupName.NAMENODE_0)) {
+                        DirCapacityDto hdfsNameNodeDirCapacity = timeSeriesService.getDataNodeHdfsCapacity(hdfsDirLocationDto.getNameNodeDir(), apiHost);
+                        dirCapacityDtos.add(hdfsNameNodeDirCapacity);
+                    }
+                }
+
         }
-
-        // Get Capacity of Directories for HDFS
-        List<DirCapacityDto> dirCapacityDtos = new ArrayList<>();
-        ApiHostList apiHostList = hostsResourceApi.readHosts(null, null, CmApiView.FULL);
-        for (ApiHost apiHost: apiHostList.getItems()) {
-            for (ApiRoleRef apiRoleRef: apiHost.getRoleRefs()) {
-
-                // HDFS DataNode
-                if (apiRoleRef.getRoleName().contains(HdfsRoleConfigGroupName.DATANODE_0)) {
-                    DirCapacityDto hdfsDataNodeDirCapacity = timeSeriesService.getDataNodeHdfsCapacity(hdfsDatanodeDir, apiHost);
-                    dirCapacityDtos.add(hdfsDataNodeDirCapacity);
-                }
-
-                // HDFS JournalNode
-                if (apiRoleRef.getRoleName().contains(HdfsRoleConfigGroupName.JOURNALNODE_0)) {
-                    DirCapacityDto hdfsJournalNodeDirCapacity = timeSeriesService.getDataNodeHdfsCapacity(hdfsJournalnodeDir, apiHost);
-                    dirCapacityDtos.add(hdfsJournalNodeDirCapacity);
-                }
-
-                // HDFS NameNode
-                if (apiRoleRef.getRoleName().contains(HdfsRoleConfigGroupName.NAMENODE_0)) {
-                    DirCapacityDto hdfsNameNodeDirCapacity = timeSeriesService.getDataNodeHdfsCapacity(hdfsNamenodeDir, apiHost);
-                    dirCapacityDtos.add(hdfsNameNodeDirCapacity);
-                }
-            }
 
             // apiHost.getHostId();
             // apiHost.getNumCores();
@@ -288,12 +255,7 @@ public class CDPClusterHealthcheck {
 
         logger.info("running performance inspector command for performance/networking check...");
         // Inspect Network Performance API for Performance/Networking Check
-        ApiClusterPerfInspectorArgs perfInspectorArgs = new ApiClusterPerfInspectorArgs();
-        ApiPerfInspectorPingArgs apiPerfInspectorPingArgs = new ApiPerfInspectorPingArgs();
-        apiPerfInspectorPingArgs.setPingTimeoutSecs(BigDecimal.valueOf(10));
-        apiPerfInspectorPingArgs.setPingCount(BigDecimal.valueOf(10));
-        apiPerfInspectorPingArgs.setPingPacketSizeBytes(BigDecimal.valueOf(56));
-        perfInspectorArgs.setPingArgs(apiPerfInspectorPingArgs);
+        ApiClusterPerfInspectorArgs perfInspectorArgs = inspectPerformanceService.buildDefaultApiClusterPerfInspectorArgs();
         ApiCommand perfInspectorCmd = clustersResourceApi.perfInspectorCommand(clusterName, perfInspectorArgs);
         ApiCommand perfInspectCmdResult = inspectPerformanceService.runInspectorCmd(perfInspectorCmd);
 
@@ -305,4 +267,3 @@ public class CDPClusterHealthcheck {
 
     }
 }
-

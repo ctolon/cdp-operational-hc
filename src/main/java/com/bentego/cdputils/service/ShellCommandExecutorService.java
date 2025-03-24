@@ -49,6 +49,7 @@ public class ShellCommandExecutorService {
             return "Error executing command: " + e.getMessage();
         }
 
+        logger.info("shell command to run execution: {} -> success", command);
         return output.toString();
     }
 
