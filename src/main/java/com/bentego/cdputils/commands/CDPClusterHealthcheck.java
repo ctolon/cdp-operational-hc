@@ -122,7 +122,7 @@ public class CDPClusterHealthcheck {
         // Get ServiceList
         List<String> serviceTypes = new ArrayList<>();
         List<String> servicesInMaintenanceMode = new ArrayList<>();
-        logger.info("getting Service Types in Cluster...");
+        logger.info("getting Service Types in cluster...");
         ApiServiceList serviceList = servicesResourceApi.readServices(clusterName, CmApiView.FULL_WITH_HEALTH_CHECK_EXPLANATION);
         for (ApiService apiService: serviceList.getItems()) {
             serviceTypes.add(apiService.getName());
