@@ -5,7 +5,9 @@ import com.cloudera.api.swagger.client.ApiException;
 import com.cloudera.api.swagger.model.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Service;
 
+@Service
 public class ClusterGeneraInfoService {
 
     Logger logger = LoggerFactory.getLogger(ClusterGeneraInfoService.class);
