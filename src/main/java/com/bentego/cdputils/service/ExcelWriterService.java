@@ -101,6 +101,10 @@ public class ExcelWriterService {
                 row.createCell(6).setCellValue(service.getHealthcheckDto().getHealthcheckSuppressed().toString());
             }
         }
+
+        for (int i = 0; i < headers.length; i++) {
+            sheet.autoSizeColumn(i);
+        }
     }
 
     private CellStyle getHeaderCellStyle(Workbook workbook) {
