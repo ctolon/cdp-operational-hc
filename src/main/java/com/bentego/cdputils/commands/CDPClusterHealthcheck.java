@@ -214,7 +214,7 @@ public class CDPClusterHealthcheck {
 
                     // HDFS JournalNode
                     if (apiRoleRef.getRoleName().contains(HdfsRoleConfigGroupName.JOURNALNODE_0)) {
-                        DirCapacityDto hdfsJournalNodeDirCapacity = timeSeriesService.getDataNodeHdfsCapacity(hdfsDirLocationDto.getJournalNodeDir(), apiHost);
+                        DirCapacityDto hdfsJournalNodeDirCapacity = timeSeriesService.getJournalNodeHdfsCapacity(hdfsDirLocationDto.getJournalNodeDir(), apiHost);
                         hdfsJournalNodeDirCapacity.setPercentagesAndFree();
                         hdfsJournalNodeDirCapacity.setWarningThresholdInGb(BigDecimal.valueOf(200)); // 200 GB Free space warning threshold
                         if (hdfsJournalNodeDirCapacity.getCapacityFree().compareTo(hdfsJournalNodeDirCapacity.getWarningThresholdInGb()) <= 0) {
@@ -227,7 +227,7 @@ public class CDPClusterHealthcheck {
 
                     // HDFS NameNode
                     if (apiRoleRef.getRoleName().contains(HdfsRoleConfigGroupName.NAMENODE_0)) {
-                        DirCapacityDto hdfsNameNodeDirCapacity = timeSeriesService.getDataNodeHdfsCapacity(hdfsDirLocationDto.getNameNodeDir(), apiHost);
+                        DirCapacityDto hdfsNameNodeDirCapacity = timeSeriesService.getNameNodeHdfsCapacity(hdfsDirLocationDto.getNameNodeDir(), apiHost);
                         hdfsNameNodeDirCapacity.setPercentagesAndFree();
                         hdfsNameNodeDirCapacity.setWarningThresholdInGb(BigDecimal.valueOf(200)); // 200 GB Free space warning threshold
                         if (hdfsNameNodeDirCapacity.getCapacityFree().compareTo(hdfsNameNodeDirCapacity.getWarningThresholdInGb()) <= 0) {
