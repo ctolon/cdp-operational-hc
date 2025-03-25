@@ -48,6 +48,7 @@ public class CDPClusterHealthcheck {
     private final DirLocatorService dirLocatorService;
     private final ClusterGeneralHealthcheckService clusterGeneralHealthcheckService;
     private final CsvWriterService csvWriterService;
+    private final ExcelWriterService excelWriterService;
 
     private final ServicesResourceApi servicesResourceApi;
     private final RoleConfigGroupsResourceApi roleConfigGroupsResourceApi;
@@ -70,6 +71,7 @@ public class CDPClusterHealthcheck {
             DirLocatorService dirLocatorService,
             ClusterGeneralHealthcheckService clusterGeneralHealthcheckService,
             CsvWriterService csvWriterService,
+            ExcelWriterService excelWriterService,
             ServicesResourceApi servicesResourceApi,
             RoleConfigGroupsResourceApi roleConfigGroupsResourceApi,
             AllHostsResourceApi allHostsResourceApi,
@@ -90,6 +92,7 @@ public class CDPClusterHealthcheck {
         this.dirLocatorService = dirLocatorService;
         this.clusterGeneralHealthcheckService = clusterGeneralHealthcheckService;
         this.csvWriterService = csvWriterService;
+        this.excelWriterService = excelWriterService;
         this.servicesResourceApi = servicesResourceApi;
         this.roleConfigGroupsResourceApi = roleConfigGroupsResourceApi;
         this.allHostsResourceApi = allHostsResourceApi;
@@ -162,13 +165,15 @@ public class CDPClusterHealthcheck {
             }
         }
 
-        // Get Bad healtchecks
-        logger.info("get cluster-wide healtcheck reports as csv...");
+        // Get Bad healtchecks as csv/xlsx
+        logger.info("get cluster-wide healthcheck reports as csv and xlsx...");
         ClusterWideBadHealthcheckDto clusterWideBadHealthcheckDto = clusterGeneralHealthcheckService.getClusterWideHealthcheck(clusterName, apiHostList, serviceList, serviceTypes);
 
-        csvWriterService.writeHostBadHealtcheckCsvToDisk(clusterWideBadHealthcheckDto, healthcheckReportConfig.getOutputDir() + "/host_bad_healtcheck.csv");
-        csvWriterService.writeServiceBadHealtcheckCsvToDisk(clusterWideBadHealthcheckDto, healthcheckReportConfig.getOutputDir() + "/service_bad_healtcheck.csv");
-        csvWriterService.writeRoleBadHealtcheckCsvToDisk(clusterWideBadHealthcheckDto, healthcheckReportConfig.getOutputDir() + "/role_bad_healtcheck.csv");
+        excelWriterService.writeAllHealthchecksToSingleExcel(clusterWideBadHealthcheckDto, healthcheckReportConfig.getOutputDir() + "/bad_healthcheck_report.xlsx");
+
+        csvWriterService.writeHostBadHealtcheckCsvToDisk(clusterWideBadHealthcheckDto, healthcheckReportConfig.getOutputDir() + "/host_bad_healthcheck.csv");
+        csvWriterService.writeServiceBadHealtcheckCsvToDisk(clusterWideBadHealthcheckDto, healthcheckReportConfig.getOutputDir() + "/service_bad_healthcheck.csv");
+        csvWriterService.writeRoleBadHealtcheckCsvToDisk(clusterWideBadHealthcheckDto, healthcheckReportConfig.getOutputDir() + "/role_bad_healthcheck.csv");
 
 
         // Check CDP UI Certificates
@@ -273,7 +278,6 @@ public class CDPClusterHealthcheck {
         ApiClusterPerfInspectorArgs perfInspectorArgs = inspectPerformanceService.buildDefaultApiClusterPerfInspectorArgs();
         ApiCommand perfInspectorCmd = clustersResourceApi.perfInspectorCommand(clusterName, perfInspectorArgs);
         ApiCommand perfInspectCmdResult = inspectPerformanceService.runInspectorCmd(perfInspectorCmd);
-
 
         return perfInspectCmdResult;
 
