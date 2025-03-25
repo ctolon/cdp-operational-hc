@@ -45,7 +45,6 @@ public class ClusterGeneralHealthcheckService {
         List<RoleBadHealthcheckDto> roleBadHealthcheckDtos = new ArrayList<>();
 
         ApiCluster apiCluster = clustersResourceApi.readCluster(clusterName);
-        // clusterWideHealthcheckDto.setClusterStatus(apiCluster.getEntityStatus().getValue());
 
         // Host based
         for (ApiHost apiHost : apiHostList.getItems()) {

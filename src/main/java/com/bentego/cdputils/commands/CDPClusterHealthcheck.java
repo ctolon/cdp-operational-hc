@@ -112,7 +112,7 @@ public class CDPClusterHealthcheck {
         clusterGeneraInfoService.retrieveClusterGeneralInfo();
 
         // Create Healthcheck report dir
-        logger.info("creating Logging/reporting root Directory as {} with Permission 755...", healthcheckReportConfig.getOutputDir());
+        logger.info("creating logging/reporting root directory as {} with permission 755...", healthcheckReportConfig.getOutputDir());
         fileManagerService.mkdirIfNotExistsAs755(healthcheckReportConfig.getOutputDir());
 
         // Get Host List
@@ -122,11 +122,11 @@ public class CDPClusterHealthcheck {
         // Get ServiceList
         List<String> serviceTypes = new ArrayList<>();
         List<String> servicesInMaintenanceMode = new ArrayList<>();
-        logger.info("getting Service Types in cluster...");
+        logger.info("getting service types in cluster...");
         ApiServiceList serviceList = servicesResourceApi.readServices(clusterName, CmApiView.FULL_WITH_HEALTH_CHECK_EXPLANATION);
         for (ApiService apiService: serviceList.getItems()) {
             serviceTypes.add(apiService.getName());
-            logger.info("service Type found: {}", apiService.getName());
+            logger.info("service type found: {}", apiService.getName());
             if (apiService.getMaintenanceMode()) {
                 servicesInMaintenanceMode.add(apiService.getName());
                 logger.warn("service found in maintenance mode: {}", apiService.getName());
@@ -135,11 +135,11 @@ public class CDPClusterHealthcheck {
         logger.info("total service in cluster: {}", serviceTypes.size());
 
         if (servicesInMaintenanceMode.isEmpty()) {
-            logger.info("no Service found in maintenance Mode.");
+            logger.info("no service found in maintenance mode.");
         }
 
         // Get RoleList
-        logger.info("Get Roles in Cluster...");
+        logger.info("get roles in cluster...");
         List<ServiceTypesDto> serviceTypesDtos = new ArrayList<>();
         for (String serviceName: serviceTypes) {
             for (ApiRole apiRole: rolesResourceApi.readRoles(clusterName, serviceName, null, CmApiView.SUMMARY).getItems()) {
@@ -207,23 +207,38 @@ public class CDPClusterHealthcheck {
                     // HDFS DataNode
                     if (apiRoleRef.getRoleName().contains(HdfsRoleConfigGroupName.DATANODE_0)) {
                         DirCapacityDto hdfsDataNodeDirCapacity = timeSeriesService.getDataNodeHdfsCapacity(hdfsDirLocationDto.getDataNodeDir(), apiHost);
+                        hdfsDataNodeDirCapacity.setPercentagesAndFree();
+                        // no need set warning threshold for datanode
                         dirCapacityDtos.add(hdfsDataNodeDirCapacity);
                     }
 
                     // HDFS JournalNode
                     if (apiRoleRef.getRoleName().contains(HdfsRoleConfigGroupName.JOURNALNODE_0)) {
                         DirCapacityDto hdfsJournalNodeDirCapacity = timeSeriesService.getDataNodeHdfsCapacity(hdfsDirLocationDto.getJournalNodeDir(), apiHost);
+                        hdfsJournalNodeDirCapacity.setPercentagesAndFree();
+                        hdfsJournalNodeDirCapacity.setWarningThresholdInGb(BigDecimal.valueOf(200)); // 200 GB Free space warning threshold
+                        if (hdfsJournalNodeDirCapacity.getCapacityFree().compareTo(hdfsJournalNodeDirCapacity.getWarningThresholdInGb()) <= 0) {
+                            logger.warn("hdfs journalnode on host {} have not enought free space. current used space: {}gb, free space: {}gb warning threshold: {}gb", apiHost.getHostname(), hdfsJournalNodeDirCapacity.getCapacityUsed(), hdfsJournalNodeDirCapacity.getCapacityFree(), hdfsJournalNodeDirCapacity.getWarningThresholdInGb());
+                        } else {
+                            logger.info("hdfs journalnode have enough free space.");
+                        }
                         dirCapacityDtos.add(hdfsJournalNodeDirCapacity);
                     }
 
                     // HDFS NameNode
                     if (apiRoleRef.getRoleName().contains(HdfsRoleConfigGroupName.NAMENODE_0)) {
                         DirCapacityDto hdfsNameNodeDirCapacity = timeSeriesService.getDataNodeHdfsCapacity(hdfsDirLocationDto.getNameNodeDir(), apiHost);
+                        hdfsNameNodeDirCapacity.setPercentagesAndFree();
+                        hdfsNameNodeDirCapacity.setWarningThresholdInGb(BigDecimal.valueOf(200)); // 200 GB Free space warning threshold
+                        if (hdfsNameNodeDirCapacity.getCapacityFree().compareTo(hdfsNameNodeDirCapacity.getWarningThresholdInGb()) <= 0) {
+                            logger.warn("hdfs namenode on host {} have not enought free space. current used space: {}gb, free space: {}gb warning threshold: {}gb", apiHost.getHostname(), hdfsNameNodeDirCapacity.getCapacityUsed(), hdfsNameNodeDirCapacity.getCapacityFree(), hdfsNameNodeDirCapacity.getWarningThresholdInGb());
+                        } else {
+                            logger.info("hdfs namenode have enough free space.");
+                        }
                         dirCapacityDtos.add(hdfsNameNodeDirCapacity);
                     }
                 }
-
-        }
+            }
 
             // apiHost.getHostId();
             // apiHost.getNumCores();
@@ -261,9 +276,6 @@ public class CDPClusterHealthcheck {
 
 
         return perfInspectCmdResult;
-
-
-        // return dirCapacityDtos;
 
     }
 }

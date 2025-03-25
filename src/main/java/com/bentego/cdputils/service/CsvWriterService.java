@@ -24,6 +24,13 @@ public class CsvWriterService {
     }
 
     public void writeRoleBadHealtcheckCsvToDisk(ClusterWideBadHealthcheckDto clusterWideBadHealthcheckDto, String filePath) {
+
+        List<RoleBadHealthcheckDto> roleBadHealthcheckDtoList = clusterWideBadHealthcheckDto.getRoleBadHealthcheckDtos();
+        if (roleBadHealthcheckDtoList != null && roleBadHealthcheckDtoList.isEmpty()) {
+            logger.info("all roles are healthy");
+            return;
+        }
+
         try (CSVWriter writer = new CSVWriter(new FileWriter(filePath))) {
 
             String[] header = {
@@ -41,8 +48,9 @@ public class CsvWriterService {
             };
             writer.writeNext(header);
 
-            List<RoleBadHealthcheckDto> roleBadHealthcheckDtoList = clusterWideBadHealthcheckDto.getRoleBadHealthcheckDtos();
+
             if (roleBadHealthcheckDtoList != null && !roleBadHealthcheckDtoList.isEmpty()) {
+                logger.warn("bad issues found for roles, writing to csv...");
                 for (RoleBadHealthcheckDto data : roleBadHealthcheckDtoList) {
                     String[] row = {
                             data.getRoleName(),
@@ -68,6 +76,13 @@ public class CsvWriterService {
     }
 
     public void writeServiceBadHealtcheckCsvToDisk(ClusterWideBadHealthcheckDto clusterWideBadHealthcheckDto, String filePath) {
+
+        List<ServiceBadHealthcheckDto> serviceBadHealthcheckDtoList = clusterWideBadHealthcheckDto.getServiceBadHealthcheckDtos();
+        if (serviceBadHealthcheckDtoList != null && serviceBadHealthcheckDtoList.isEmpty()) {
+            logger.info("all services are healthy");
+            return;
+        }
+
         try (CSVWriter writer = new CSVWriter(new FileWriter(filePath))) {
 
             String[] header = {
@@ -81,8 +96,9 @@ public class CsvWriterService {
             };
             writer.writeNext(header);
 
-            List<ServiceBadHealthcheckDto> serviceBadHealthcheckDtoList = clusterWideBadHealthcheckDto.getServiceBadHealthcheckDtos();
+
             if (serviceBadHealthcheckDtoList != null && !serviceBadHealthcheckDtoList.isEmpty()) {
+                logger.warn("bad issues found for services, writing to csv...");
                 for (ServiceBadHealthcheckDto data : serviceBadHealthcheckDtoList) {
                     String[] row = {
                             data.getServiceName(),
@@ -100,10 +116,17 @@ public class CsvWriterService {
             e.printStackTrace();
         }
 
-        logger.info("service bad healtcheck csv successfully created on path: {}", filePath);
+        logger.info("service bad healthcheck csv successfully created on path: {}", filePath);
     }
 
     public void writeHostBadHealtcheckCsvToDisk(ClusterWideBadHealthcheckDto clusterWideBadHealthcheckDto, String filePath) {
+
+        List<HostBadHealthcheckDto> hostBadHealthcheckDtoList = clusterWideBadHealthcheckDto.getHostBadHealthcheckDtos();
+        if (hostBadHealthcheckDtoList != null && hostBadHealthcheckDtoList.isEmpty()) {
+            logger.info("all hosts are healthy");
+            return;
+        }
+
         try (CSVWriter writer = new CSVWriter(new FileWriter(filePath))) {
 
             String[] header = {
@@ -116,8 +139,9 @@ public class CsvWriterService {
             };
             writer.writeNext(header);
 
-            List<HostBadHealthcheckDto> hostBadHealthcheckDtoList = clusterWideBadHealthcheckDto.getHostBadHealthcheckDtos();
+
             if (hostBadHealthcheckDtoList != null && !hostBadHealthcheckDtoList.isEmpty()) {
+                logger.warn("bad issues found for hosts, writing to csv...");
                 for (HostBadHealthcheckDto data : hostBadHealthcheckDtoList) {
                     String[] row = {
                             data.getHostId(),
@@ -134,6 +158,6 @@ public class CsvWriterService {
             e.printStackTrace();
         }
 
-        logger.info("host bad healtcheck csv successfully created on path: {}", filePath);
+        logger.info("host bad healthcheck csv successfully created on path: {}", filePath);
     }
 }
