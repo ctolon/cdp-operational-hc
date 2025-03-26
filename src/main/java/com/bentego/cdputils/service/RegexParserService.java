@@ -115,14 +115,24 @@ public class RegexParserService {
             if (matcher.find()) {
                 String value = matcher.group(1);
                 try {
-                    if (entry[0].equals("status")) {
-                        report.setStatus(value);
-                    } else if (entry[0].equals("avgBlockReplication")) {
-                        report.getClass().getMethod("set" + capitalize(entry[0]), double.class)
-                                .invoke(report, Double.parseDouble(value));
-                    } else {
-                        report.getClass().getMethod("set" + capitalize(entry[0]), int.class)
-                                .invoke(report, Integer.parseInt(value));
+                    switch (entry[0]) {
+                        case "status":
+                            report.setStatus(value);
+                            break;
+                        case "avgBlockReplication":
+                        case "ecAvgBlockGroupSize":
+                            report.getClass().getMethod("set" + capitalize(entry[0]), double.class)
+                                    .invoke(report, Double.parseDouble(value));
+                            break;
+                        case "avgBlockSize":
+                        case "ecTotalSize":
+                            report.getClass().getMethod("set" + capitalize(entry[0]), long.class)
+                                    .invoke(report, Long.parseLong(value));
+                            break;
+                        default:
+                            report.getClass().getMethod("set" + capitalize(entry[0]), int.class)
+                                    .invoke(report, Integer.parseInt(value));
+                            break;
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
