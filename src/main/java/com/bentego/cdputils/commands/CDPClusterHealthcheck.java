@@ -4,6 +4,7 @@ import com.bentego.cdputils.configuration.HealthcheckReportConfig;
 import com.bentego.cdputils.contants.api.CmApiView;
 import com.bentego.cdputils.contants.roleconfig.HdfsRoleConfigGroupName;
 import com.bentego.cdputils.dtos.*;
+import com.bentego.cdputils.dtos.command.HdfsFsckOutputDto;
 import com.bentego.cdputils.dtos.healthcheck.ClusterWideBadHealthcheckDto;
 import com.bentego.cdputils.enums.DataUnit;
 import com.bentego.cdputils.enums.RoleConfigUIBinding;
@@ -49,6 +50,7 @@ public class CDPClusterHealthcheck {
     private final ClusterGeneralHealthcheckService clusterGeneralHealthcheckService;
     private final CsvWriterService csvWriterService;
     private final ExcelWriterService excelWriterService;
+    private final RegexParserService regexParserService;
 
     private final ServicesResourceApi servicesResourceApi;
     private final RoleConfigGroupsResourceApi roleConfigGroupsResourceApi;
@@ -72,6 +74,7 @@ public class CDPClusterHealthcheck {
             ClusterGeneralHealthcheckService clusterGeneralHealthcheckService,
             CsvWriterService csvWriterService,
             ExcelWriterService excelWriterService,
+            RegexParserService regexParserService,
             ServicesResourceApi servicesResourceApi,
             RoleConfigGroupsResourceApi roleConfigGroupsResourceApi,
             AllHostsResourceApi allHostsResourceApi,
@@ -93,6 +96,7 @@ public class CDPClusterHealthcheck {
         this.clusterGeneralHealthcheckService = clusterGeneralHealthcheckService;
         this.csvWriterService = csvWriterService;
         this.excelWriterService = excelWriterService;
+        this.regexParserService = regexParserService;
         this.servicesResourceApi = servicesResourceApi;
         this.roleConfigGroupsResourceApi = roleConfigGroupsResourceApi;
         this.allHostsResourceApi = allHostsResourceApi;
@@ -257,9 +261,11 @@ public class CDPClusterHealthcheck {
         Path hdfsSafeModeOutputPath = Paths.get(healthcheckReportConfig.getOutputDir() + "/hdfs-safe-mode.txt");
         Files.write(hdfsSafeModeOutputPath, hdfsSafeModeCheck.getBytes(StandardCharsets.UTF_8));
 
-        String hdfsFsck = shellCommandExecutorService.executeCommand("hdfs fsck /");
+        String hdfsFsck = shellCommandExecutorService.executeCommand("sudo -u hdfs hdfs fsck /");
         Path fsckOutputPath = Paths.get(healthcheckReportConfig.getOutputDir() + "/hdfs-fsck.txt");
         Files.write(fsckOutputPath, hdfsFsck.getBytes(StandardCharsets.UTF_8));
+        HdfsFsckOutputDto hdfsFsckOutputDto = regexParserService.parseFsckReport2(hdfsFsck);
+        logger.info(hdfsFsckOutputDto.toString());
 
         if (kinitUser != null) {
             logger.info("login with kinit with user: {}...", kinitUser);
